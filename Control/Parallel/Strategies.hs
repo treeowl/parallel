@@ -142,8 +142,8 @@ module Control.Parallel.Strategies (
 
 #if !MIN_VERSION_base(4,8,0)
 import Data.Traversable
-import Control.Applicative
 #endif
+import Control.Applicative
 import Control.Parallel
 import Control.DeepSeq (NFData(rnf))
 
@@ -464,7 +464,11 @@ parListSplitAt n stratPref stratSuff = evalListSplitAt n (rparWith stratPref) (r
 
 -- | Evaluate the first n elements of a list according to the given strategy.
 evalListN :: Int -> Strategy a -> Strategy [a]
-evalListN n strat = evalListSplitAt n (evalList strat) r0
+evalListN n0 strat xs0 = go n0 xs0
+  where
+    go !_n [] = pure []
+    go 0 xs = pure xs
+    go n (x : xs) = liftA2 (:) (strat x) (go (n - 1) xs)
 
 -- | Like 'evalListN' but evaluates the first n elements in parallel.
 parListN :: Int -> Strategy a -> Strategy [a]
